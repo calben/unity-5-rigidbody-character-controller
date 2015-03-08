@@ -56,6 +56,10 @@ public class RigidbodyNetworkedPlayerController : MonoBehaviour
   float defaultFOV;
   float targetFOV;
 
+  public bool showCrosshair = false;
+  public Texture2D verticalTexture;
+  public Texture2D horizontalTexture;
+
   void Awake()
   {
     if (debug)
@@ -131,28 +135,56 @@ public class RigidbodyNetworkedPlayerController : MonoBehaviour
     }
     this.myCamera.fieldOfView = Mathf.Lerp(this.myCamera.fieldOfView, targetFOV, Time.deltaTime);
 
-    //#region Collisions
-    //Vector3 baseTempPosition = this.transform.position + camYRotation * targetPivotOffset;
-    //Vector3 tempOffset = targetCamOffset;
-    //for (float zOffset = targetCamOffset.z; zOffset < 0; zOffset += 0.5f)
-    //{
-    //  tempOffset.z = zOffset;
-    //  if (DoubleViewingPosCheck(baseTempPosition + aimRotation * tempOffset))
-    //  {
-    //    if(debug)
-    //    {
-    //      Debug.Log("Collision detected");
-    //    }
-    //    targetCamOffset.z = tempOffset.z;
-    //    break;
-    //  }
-    //}
-    //#endregion
+    #region Collisions
+    Vector3 baseTempPosition = this.transform.position + camYRotation * targetPivotOffset;
+    Vector3 tempOffset = targetCamOffset;
+    for (float zOffset = targetCamOffset.z; zOffset < 0; zOffset += 0.5f)
+    {
+      tempOffset.z = zOffset;
+      if (DoubleViewingPosCheck(baseTempPosition + aimRotation * tempOffset))
+      {
+        if (debug)
+        {
+          Debug.Log("Collision detected");
+        }
+        targetCamOffset.z = tempOffset.z;
+        break;
+      }
+    }
+    #endregion
 
     smoothPivotOffset = Vector3.Lerp(smoothPivotOffset, targetPivotOffset, 10f * Time.deltaTime);
     smoothCamOffset = Vector3.Lerp(smoothCamOffset, targetCamOffset, 10f * Time.deltaTime);
 
     this.myCamera.transform.position = this.transform.position + camYRotation * smoothPivotOffset + aimRotation * smoothCamOffset;
+  }
+
+
+  Texture2D temp;
+  public float spread;
+  public float minSpread = 20.0f;
+  public float maxSpread = 40.0f;
+  void DrawCrossHair()
+  {
+    GUIStyle verticalT = new GUIStyle();
+    GUIStyle horizontalT = new GUIStyle();
+    verticalT.normal.background = verticalTexture;
+    horizontalT.normal.background = horizontalTexture;
+    spread = Mathf.Clamp(spread, minSpread, maxSpread);
+    Vector2 pivot = new Vector2(Screen.width / 2, Screen.height / 2);
+    GUI.Box(new Rect((Screen.width - 2) / 2, (Screen.height - spread) / 2 - 14, 2, 14), temp, horizontalT);
+    GUIUtility.RotateAroundPivot(45, pivot);
+    GUI.Box(new Rect((Screen.width + spread) / 2, (Screen.height - 2) / 2, 14, 2), temp, verticalT);
+    GUIUtility.RotateAroundPivot(0, pivot);
+    GUI.Box(new Rect((Screen.width - 2) / 2, (Screen.height + spread) / 2, 2, 14), temp, horizontalT);
+  }
+
+  void OnGUI()
+  {
+    if (this.playerState == PlayerControllerState.aiming)
+    {
+      this.DrawCrossHair();
+    }
   }
 
   bool DoubleViewingPosCheck(Vector3 checkPos)
