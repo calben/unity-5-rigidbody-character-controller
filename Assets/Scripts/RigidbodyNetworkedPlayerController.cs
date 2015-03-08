@@ -19,17 +19,16 @@ public class RigidbodyNetworkedPlayerController : MonoBehaviour
   public float jumpCooldown;
   float jumpCooldownTmp;
 
-  public Vector3 relCameraPos = new Vector3(-2.0f, 1.0f, 0.0f);
-  public float relCameraPosMag = 2.0f;
+  public float relCameraPosMag = 1.5f;
   public Vector3 pivotOffset = new Vector3(0.0f, 1.0f, 0.0f);
-  public Vector3 camOffset = new Vector3(0.0f, 0.7f, -3.0f);
+  public Vector3 camOffset = new Vector3(0.8f, 0.7f, -3.0f);
   public Vector3 aimPivotOffset = new Vector3(0.0f, 1.7f, -0.3f);
-  public Vector3 aimCamOffset = new Vector3(0.8f, 0.0f, -1.0f);
+  public Vector3 aimCamOffset = new Vector3(1.2f, 0.0f, -1.0f);
   public Vector3 runPivotOffset = new Vector3(0.0f, 1.0f, 0.0f);
   public Vector3 runCamOffset = new Vector3(0.0f, 0.7f, -3.0f);
-  public float runFOV = 100f;
-  public float aimFOV = 60f;
-  public float FOV = 80f;
+  public float runFOV = 80f;
+  public float aimFOV = 40f;
+  public float FOV = 60f;
 
   [HideInInspector]
   public float smoothingTurn = 2.0f;
@@ -87,8 +86,6 @@ public class RigidbodyNetworkedPlayerController : MonoBehaviour
   void GrabCamera(Camera cam)
   {
     this.myCamera = cam;
-    relCameraPos = this.myCamera.transform.position - this.transform.position;
-    relCameraPosMag = relCameraPos.magnitude - 0.5f;
     smoothPivotOffset = pivotOffset;
     smoothCamOffset = camOffset;
     Debug.Log("Camera has been reset by player");
@@ -212,6 +209,8 @@ public class RigidbodyNetworkedPlayerController : MonoBehaviour
     Vector3 forward = this.myCamera.transform.TransformDirection(Vector3.forward);
     forward = forward.normalized;
     this.moveDirection = this.controllerMoveDirection.y * forward + this.controllerMoveDirection.x * new Vector3(forward.z, 0, -forward.x);
+
+    AdjustCamera();
 
     #region RunningActionByState
     forward = this.myCamera.transform.TransformDirection(Vector3.forward);
