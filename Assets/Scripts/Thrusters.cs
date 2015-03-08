@@ -5,7 +5,7 @@ using GamepadInput;
 public class Thrusters : MonoBehaviour
 {
 
-  public float thrusterPower = 1.0f;
+  public float thrusterPower = 0.2f;
   public float velocityDampingSpeed = 0.02f;
   public float rotationRightingSpeed = 0.02f;
 
@@ -36,7 +36,7 @@ public class Thrusters : MonoBehaviour
           Debug.Log("Player rotation " + this.transform.rotation + " angularVelocity " + this.GetComponent<Rigidbody>().angularVelocity + " velocity " + this.GetComponent<Rigidbody>().velocity);
         }
       }
-      if (!this.alreadyThrusted)
+      if (!this.alreadyThrusted || true) // temporary true
       {
         if (state.LeftShoulder)
         {
