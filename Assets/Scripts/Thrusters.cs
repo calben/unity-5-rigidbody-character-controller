@@ -9,6 +9,9 @@ public class Thrusters : MonoBehaviour
   public float velocityDampingSpeed = 0.02f;
   public float rotationRightingSpeed = 0.02f;
 
+  bool alreadyThrusted; // use instead of "buttondown"
+  public bool debug = true;
+
   NetworkView networkView;
 
   void Awake()
@@ -28,18 +31,31 @@ public class Thrusters : MonoBehaviour
         this.GetComponent<Rigidbody>().transform.rotation = Quaternion.Slerp(currentRotation, Quaternion.Euler(currentRotation.x, 90, currentRotation.z), this.rotationRightingSpeed);
         this.GetComponent<Rigidbody>().velocity = Vector3.Lerp(this.GetComponent<Rigidbody>().velocity, Vector3.zero, this.velocityDampingSpeed);
         this.GetComponent<Rigidbody>().angularVelocity = Vector3.Lerp(this.GetComponent<Rigidbody>().angularVelocity, Vector3.zero, this.velocityDampingSpeed);
+        if(debug)
+        {
+          Debug.Log("Player rotation " + this.transform.rotation + " angularVelocity " + this.GetComponent<Rigidbody>().angularVelocity + " velocity " + this.GetComponent<Rigidbody>().velocity);
+        }
       }
-      if (state.LeftShoulder)
+      if (!this.alreadyThrusted)
       {
-        direction = this.GetComponent<Rigidbody>().transform.up;
-      }
-      else if (state.RightShoulder)
-      {
-        direction = this.GetComponent<Rigidbody>().transform.up * -1;
+        if (state.LeftShoulder)
+        {
+          direction = this.GetComponent<Rigidbody>().transform.up;
+          this.alreadyThrusted = true;
+        }
+        else if (state.RightShoulder)
+        {
+          direction = this.GetComponent<Rigidbody>().transform.up * -1;
+          this.alreadyThrusted = true;
+        }
+        else
+        {
+          return;
+        }
       }
       else
       {
-        return;
+        this.alreadyThrusted = true;
       }
     }
     if (Network.isServer || Network.isClient)

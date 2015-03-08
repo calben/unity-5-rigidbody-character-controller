@@ -14,18 +14,19 @@ public class RigidbodyNetworkedPlayerController : MonoBehaviour
   public float aimSpeedMultiplier = 0.2f;
   public float horizontalAimingSpeed = 400f;
   public float verticalAimingSpeed = 400f;
+  public float velocityDampingSpeed = 0.02f;
 
   public float jumpHeight = 2.0f;
   public float jumpCooldown;
   float jumpCooldownTmp;
 
   public float relCameraPosMag = 1.5f;
-  public Vector3 pivotOffset = new Vector3(0.0f, 1.0f, 0.0f);
-  public Vector3 camOffset = new Vector3(0.8f, 0.7f, -3.0f);
-  public Vector3 aimPivotOffset = new Vector3(0.0f, 1.7f, -0.3f);
-  public Vector3 aimCamOffset = new Vector3(1.2f, 0.0f, -1.0f);
-  public Vector3 runPivotOffset = new Vector3(0.0f, 1.0f, 0.0f);
-  public Vector3 runCamOffset = new Vector3(0.0f, 0.7f, -3.0f);
+  public Vector3 pivotOffset = new Vector3(1.5f, 0.0f, -2.0f);
+  public Vector3 camOffset = new Vector3(1f, 3.5f, -6f);
+  public Vector3 aimPivotOffset = new Vector3(1.0f, 0.0f, 0.0f);
+  public Vector3 aimCamOffset = new Vector3(1f, 3f, -5.0f);
+  public Vector3 runPivotOffset = new Vector3(1f, 0.0f, -2.0f);
+  public Vector3 runCamOffset = new Vector3(1f, 3.5f, -6f);
   public float runFOV = 80f;
   public float aimFOV = 40f;
   public float FOV = 60f;
@@ -39,7 +40,7 @@ public class RigidbodyNetworkedPlayerController : MonoBehaviour
   public Vector2 controllerLookDirection;
   Vector3 moveDirection;
 
-  public bool debug;
+  public bool debug = true;
 
   GamePad.Index padIndex;
   [HideInInspector]
@@ -101,8 +102,13 @@ public class RigidbodyNetworkedPlayerController : MonoBehaviour
   {
     angleH += this.controllerLookDirection.x * this.horizontalAimingSpeed * Time.deltaTime;
     angleV += this.controllerLookDirection.y * this.verticalAimingSpeed * Time.deltaTime;
-    angleV = Mathf.Clamp(angleV, -80, 80);
+    //angleV = Mathf.Clamp(angleV, 80, 80);
+    //angleH = Mathf.Clamp(angleH, -80, 80);
     Quaternion aimRotation = Quaternion.Euler(-angleV, angleH, 0);
+    if (this.GetComponent<Rigidbody>().velocity.magnitude > 0.2f)
+    {
+      aimRotation = Quaternion.Slerp(aimRotation, Quaternion.Euler(this.transform.forward), this.velocityDampingSpeed);
+    }
     Quaternion camYRotation = Quaternion.Euler(0, angleH, 0);
     this.myCamera.transform.rotation = aimRotation;
     if (this.playerState == PlayerControllerState.aiming)
@@ -125,19 +131,23 @@ public class RigidbodyNetworkedPlayerController : MonoBehaviour
     }
     this.myCamera.fieldOfView = Mathf.Lerp(this.myCamera.fieldOfView, targetFOV, Time.deltaTime);
 
-    #region Collisions
-    Vector3 baseTempPosition = this.transform.position + camYRotation * targetPivotOffset;
-    Vector3 tempOffset = targetCamOffset;
-    for (float zOffset = targetCamOffset.z; zOffset < 0; zOffset += 0.5f)
-    {
-      tempOffset.z = zOffset;
-      if (DoubleViewingPosCheck(baseTempPosition + aimRotation * tempOffset))
-      {
-        targetCamOffset.z = tempOffset.z;
-        break;
-      }
-    }
-    #endregion
+    //#region Collisions
+    //Vector3 baseTempPosition = this.transform.position + camYRotation * targetPivotOffset;
+    //Vector3 tempOffset = targetCamOffset;
+    //for (float zOffset = targetCamOffset.z; zOffset < 0; zOffset += 0.5f)
+    //{
+    //  tempOffset.z = zOffset;
+    //  if (DoubleViewingPosCheck(baseTempPosition + aimRotation * tempOffset))
+    //  {
+    //    if(debug)
+    //    {
+    //      Debug.Log("Collision detected");
+    //    }
+    //    targetCamOffset.z = tempOffset.z;
+    //    break;
+    //  }
+    //}
+    //#endregion
 
     smoothPivotOffset = Vector3.Lerp(smoothPivotOffset, targetPivotOffset, 10f * Time.deltaTime);
     smoothCamOffset = Vector3.Lerp(smoothCamOffset, targetCamOffset, 10f * Time.deltaTime);
@@ -231,7 +241,12 @@ public class RigidbodyNetworkedPlayerController : MonoBehaviour
     #endregion
 
     #region Movement
-    this.GetComponent<Rigidbody>().velocity = this.moveDirection;
+    if (this.moveDirection.magnitude > 0.05f)
+    {
+      this.GetComponent<Rigidbody>().velocity = Vector3.Lerp(this.GetComponent<Rigidbody>().velocity, this.moveDirection, this.velocityDampingSpeed);
+      this.transform.forward = Vector3.Lerp(this.transform.forward, this.GetComponent<Rigidbody>().velocity.normalized, this.velocityDampingSpeed);
+      this.GetComponent<Rigidbody>().angularVelocity = Vector3.Lerp(this.GetComponent<Rigidbody>().angularVelocity, Vector3.zero, this.velocityDampingSpeed);
+    }
     #endregion
   }
 
